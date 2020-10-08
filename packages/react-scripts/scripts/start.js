@@ -31,7 +31,7 @@ const verifyTypeScriptSetup = require('./utils/verifyTypeScriptSetup');
 verifyTypeScriptSetup();
 // @remove-on-eject-end
 
-const fs = require('fs');
+const fs = require('fs-extra');
 const chalk = require('react-dev-utils/chalk');
 const webpack = require('webpack');
 const WebpackDevServer = require('webpack-dev-server');
@@ -47,6 +47,7 @@ const openBrowser = require('react-dev-utils/openBrowser');
 const paths = require('../config/paths');
 const configFactory = require('../config/webpack.config');
 const createDevServerConfig = require('../config/webpackDevServer.config');
+const { argv } = require('yargs');
 
 const useYarn = fs.existsSync(paths.yarnLockFile);
 const isInteractive = process.stdout.isTTY;
@@ -76,6 +77,8 @@ if (process.env.HOST) {
   );
   console.log();
 }
+
+const isStatic = !!argv.static;
 
 // We require that you explicitly set browsers and do not fall back to
 // browserslist defaults.
@@ -109,6 +112,12 @@ checkBrowsers(paths.appPath, isInteractive)
       errors: errors =>
         devServer.sockWrite(devServer.sockets, 'errors', errors),
     };
+
+    // Extend webpack config to write to build path in development for static app
+    if (isStatic) {
+      config.output.path = paths.appBuild;
+    }
+
     // Create a webpack compiler that is configured with custom messages.
     const compiler = createCompiler({
       appName,
@@ -132,6 +141,17 @@ checkBrowsers(paths.appPath, isInteractive)
       proxyConfig,
       urls.lanUrlForConfig
     );
+
+    // Extend dev server config for static app
+    if (isStatic) {
+      serverConfig.writeToDisk = true;
+      serverConfig.headers = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+        "Access-Control-Allow-Headers": "X-Requested-With, content-type, Authorization, Cookie"
+      }
+    }
+
     const devServer = new WebpackDevServer(compiler, serverConfig);
     // Launch WebpackDevServer.
     devServer.listen(port, HOST, err => {
@@ -155,6 +175,12 @@ checkBrowsers(paths.appPath, isInteractive)
       }
 
       console.log(chalk.cyan('Starting the development server...\n'));
+
+      // copy public folder to build for static apps
+      if (isStatic) {
+        copyPublicFolder();
+      }
+
       openBrowser(urls.localUrlForBrowser);
     });
 
@@ -180,3 +206,11 @@ checkBrowsers(paths.appPath, isInteractive)
     }
     process.exit(1);
   });
+
+// Copied from build script
+function copyPublicFolder() {
+  fs.copySync(paths.appPublic, paths.appBuild, {
+    dereference: true,
+    filter: file => file !== paths.appHtml,
+  });
+}

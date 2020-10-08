@@ -1,3 +1,40 @@
+# GooseChase fork of Create React App
+
+Forked to add ability to have a static app in development, while still having hot reload enabled.
+
+## Creating an App
+
+1. Clone this repo, and `git checkout gc-static`
+2. `cd goosechase-create-react-app/packages/react-scripts && npm install`
+3. cd to dir where you want to create the app
+4. Run:
+```sh
+npx create-react-app my-app --scripts-version file:path/to/goosechase-create-react-app/packages/react-scripts --template typescript
+```
+(alternatively, we can publish this react-scripts version to npm instead of using the file)
+
+5. Inside the new project, open `react-app-env.d.ts` and change `react-scripts` to `goosechase-react-scripts`. This is due to a [bug](https://github.com/facebook/create-react-app/issues/8223) with forking create-react-app and using the typescript template. 
+6. If your app makes xhr requests to your API, add a `proxy` field in your `package.json` to equal the url of your API server
+
+That's it! If you want to develop a Server Side Rendered or static app, perform these extra steps:
+1. Configure the Webpack dev server socket. Make a `.env` file and add `WDS_SOCKET_PORT` to equal the port that your webpack dev server runs on (defaults to 3000)
+2. Configure your own server to serve the index.html from the `build` folder
+3. Run the webpack dev server via `react-scripts start --static`
+4. Run your own server, and visit that url. You should now have statically served files with hot reload enabled!
+
+## What's Changed Specifically?
+
+- Webpack dev server config `writeToDisk` set to `true`
+- Webpack dev server config `headers` set to allow cross origin requests. This is likely needed in docker environments with the API proxy.
+- Webpack config `output.path` changed to the `build` folder in development
+- react-scripts `start.js` script modified to copy the `public` folder to the `build` folder when invoked (just like it would if you ran `react-scripts build`)
+
+## Keeping Up To Date with Create React App
+
+Pull changes from the original create react app repo into this one
+
+_Original Create React App readme below_:
+
 # Create React App [![Build Status](https://dev.azure.com/facebook/create-react-app/_apis/build/status/facebook.create-react-app?branchName=master)](https://dev.azure.com/facebook/create-react-app/_build/latest?definitionId=1&branchName=master) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-green.svg)](https://github.com/facebook/create-react-app/blob/master/CONTRIBUTING.md)
 
 Create React apps with no build configuration.

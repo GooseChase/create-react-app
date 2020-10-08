@@ -355,6 +355,7 @@ module.exports = function(
   console.log();
   console.log(chalk.cyan(`  ${displayedCommand} start`));
   console.log('    Starts the development server.');
+  console.log(`    Use flag ${chalk.cyan('--static')} for SSR or static apps`);
   console.log();
   console.log(
     chalk.cyan(`  ${displayedCommand} ${useYarn ? '' : 'run '}build`)
